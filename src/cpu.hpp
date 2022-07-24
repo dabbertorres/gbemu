@@ -5,8 +5,10 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
-#include <queue>
+#include <stack>
 
+#include "models.hpp"
+#include "registers.hpp"
 #include "util.hpp"
 
 namespace gb
@@ -16,23 +18,23 @@ struct memory;
 
 enum class interrupt : uint8_t
 {
-    vblank   = 1 << 0,
-    lcd_stat = 1 << 1,
-    timer    = 1 << 2,
-    serial   = 1 << 3,
-    joypad   = 1 << 4,
+    vblank   = 1U << 0U,
+    lcd_stat = 1U << 1U,
+    timer    = 1U << 2U,
+    serial   = 1U << 3U,
+    joypad   = 1U << 4U,
 
-    END = 1 << 5,
+    END = 1U << 5U,
 };
 
 struct cpu
 {
 public:
-    cpu(std::unique_ptr<memory>&& mem) noexcept;
+    explicit cpu(std::unique_ptr<memory>&& mem, model model) noexcept;
 
     void run() noexcept;
     void stop() noexcept;
-    void queue_interrupt(interrupt i) noexcept;
+    void queue_interrupt(interrupt type) noexcept;
 
 private:
     enum class condition : uint8_t
@@ -49,40 +51,14 @@ private:
         halt,
         disable_interrupts,
         enable_interrupts,
-        // TODO
     };
 
-    struct register_alias
-    {
-        operator uint8_t&() noexcept { return ref; }
-
-        register_alias& operator=(uint8_t v) noexcept
-        {
-            ref = v;
-            return *this;
-        }
-
-        register_alias& operator+=(uint8_t v) noexcept
-        {
-            ref += v;
-            return *this;
-        }
-
-        register_alias& operator-=(uint8_t v) noexcept
-        {
-            ref -= v;
-            return *this;
-        }
-
-        uint8_t& ref;
-    };
-
-    uint8_t fetch() noexcept;
+    uint8_t  fetch() noexcept;
     uint16_t fetch16() noexcept;
 
-    void process_interrupts() noexcept;
-    void update_lcd() noexcept;
-    void update_timers() noexcept;
+    void     process_interrupts() noexcept;
+    void     update_lcd() noexcept;
+    void     update_timers() noexcept;
     uint32_t execute(uint8_t op) noexcept;
 
     template<std::unsigned_integral T>
@@ -120,8 +96,8 @@ private:
     uint32_t op_ld(uint8_t& dst, uint8_t val) noexcept;
     uint32_t op_ld(uint8_t& dst, uint16_t addr) noexcept;
     uint32_t op_ld(uint16_t addr, uint8_t val) noexcept;
-    uint32_t op_ld_nn(uint8_t& dst) noexcept;
-    uint32_t op_ld_nn(uint8_t val) noexcept;
+    uint32_t op_ld_from_nn(uint8_t& dst) noexcept;
+    uint32_t op_ld_to_nn(uint8_t val) noexcept;
     // the suffix in the following functions is the destination of each ld instruction
     uint32_t op_ldd_A() noexcept;
     uint32_t op_ldd_HL() noexcept;
@@ -238,68 +214,13 @@ private:
 
     const std::unique_ptr<memory> mem;
 
-    std::queue<action> pipeline;
+    std::stack<action> pipeline;
 
     std::atomic_bool running;
-    bool interrupts_enabled;
-    uint32_t cycles;
+    bool             interrupts_enabled;
+    uint32_t         cycles;
 
-    // registers
-    union
-    {
-        uint8_t af_bytes[2];
-        uint16_t AF;
-    };
-    register_alias A{af_bytes[1]};
-    register_alias F{af_bytes[0]};
-
-    union
-    {
-        uint8_t bc_bytes[2];
-        uint16_t BC;
-    };
-    register_alias B{bc_bytes[1]};
-    register_alias C{bc_bytes[0]};
-
-    union
-    {
-        uint8_t de_bytes[2];
-        uint16_t DE;
-    };
-    register_alias D{de_bytes[1]};
-    register_alias E{de_bytes[0]};
-
-    union
-    {
-        uint8_t hl_bytes[2];
-        uint16_t HL;
-    };
-    register_alias H{hl_bytes[1]};
-    register_alias L{hl_bytes[0]};
-
-    uint16_t sp;
-    uint16_t pc;
-
-    // flags
-    bool zero() noexcept       { return (F.ref & 0x80) != 0; }
-    void zero(bool b) noexcept { if (b) set_zero(); else reset_zero(); }
-    void set_zero() noexcept   { F.ref |= 0x80; }
-    void reset_zero() noexcept { F.ref &= ~0x80; }
-
-    bool sub() noexcept       { return (F.ref & 0x40) != 0; }
-    void sub(bool b) noexcept { if (b) set_sub(); else reset_sub(); }
-    void set_sub() noexcept   { F.ref |= 0x40; }
-    void reset_sub() noexcept { F.ref &= ~0x40; }
-
-    bool half_carry() noexcept       { return (F.ref & 0x20) != 0; }
-    void half_carry(bool b) noexcept { if (b) set_half_carry(); else reset_half_carry(); }
-    void set_half_carry() noexcept   { F.ref |= 0x20; }
-    void reset_half_carry() noexcept { F.ref &= ~0x20; }
-
-    bool carry() noexcept       { return (F.ref & 0x10) != 0; }
-    void carry(bool b) noexcept { if (b) set_carry(); else reset_carry(); }
-    void set_carry() noexcept   { F.ref |= 0x10; }
-    void reset_carry() noexcept { F.ref &= ~0x10; }
+    registers r;
 };
 
 }

@@ -1,25 +1,27 @@
-#include <iostream>
-#include <fstream>
+#include <cstdio>
 #include <filesystem>
-#include <thread>
+#include <iomanip>
+#include <ios>
+#include <iostream>
 #include <system_error>
+#include <thread>
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_video.h>
+#include <SDL2/SDL_error.h>
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_log.h>
-#include <SDL2/SDL_error.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_video.h>
 
-#include "rom.hpp"
+#include "cartridge.hpp"
 #include "cpu.hpp"
 #include "memory.hpp"
 
 namespace fs = std::filesystem;
 
-gb::rom load_rom(fs::path path);
+std::error_code load_cart(const fs::path& path, gb::cartridge& cart);
 
-int main(int argc, char** argv)
+int main(int argc, char* argv[])
 {
     if (argc < 2)
     {
@@ -27,64 +29,74 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    const auto rom_file = fs::path(argv[1]);
-    const auto rom = load_rom(rom_file);
+    const fs::path rom_file = fs::path(argv[1]);
 
-    auto mem = std::make_unique<gb::memory>();
-    mem->load_rom(rom);
+    gb::cartridge cart;
+    if (auto err = load_cart(rom_file, cart); err)
+    {
+        std::cerr << "unable to load " << std::quoted(rom_file.string()) << ": " << err.message() << std::endl;
+        return 1;
+    }
 
-    auto res = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS);
+    int res = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS);
     if (res != 0)
     {
         SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "init failure: %s", SDL_GetError());
-        std::exit(1);
+        return 1;
     }
 
-    auto* window = SDL_CreateWindow("gbemu",
-            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-            800, 600,
-            SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+    SDL_Window* window = SDL_CreateWindow("gbemu",
+                                          SDL_WINDOWPOS_CENTERED,
+                                          SDL_WINDOWPOS_CENTERED,
+                                          800,
+                                          600,
+                                          SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
     if (window == nullptr)
     {
         SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "failure to create window: %s", SDL_GetError());
-        std::exit(1);
+        return 1;
     }
 
-    auto* renderer = SDL_CreateRenderer(window, -1,
-            SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
     if (renderer == nullptr)
     {
         SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "failure to create renderer: %s", SDL_GetError());
-        std::exit(1);
+        return 1;
     }
 
     {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(renderer, &info);
-        SDL_Log("renderer: %s", info.name);
+        SDL_Log("renderer: %s; texture max size: %d x %d; num texture formats: %d",
+                info.name,
+                info.max_texture_width,
+                info.max_texture_height,
+                info.num_texture_formats);
 
-        if ((info.flags & SDL_RENDERER_SOFTWARE) != 0)
-            SDL_Log("renderer type: software");
-        if ((info.flags & SDL_RENDERER_ACCELERATED) != 0)
-            SDL_Log("renderer type: accelerated");
+        if ((info.flags & SDL_RENDERER_SOFTWARE) != 0) SDL_Log("renderer type: software");
+        if ((info.flags & SDL_RENDERER_ACCELERATED) != 0) SDL_Log("renderer type: accelerated");
     }
 
     {
-        auto cpu = gb::cpu{std::move(mem)};
+        // TODO determine memory_bank_controller to use
+        auto controller = nullptr;
+
+        auto         mem = std::make_unique<gb::memory>(controller, cart);
+        gb::cpu      cpu = gb::cpu{std::move(mem), gb::model::original};
         std::jthread cpu_thread{&gb::cpu::run, &cpu};
 
         bool run = true;
         while (run)
         {
             SDL_Event event;
-            while(SDL_PollEvent(&event))
+            while (SDL_PollEvent(&event) != 0)
             {
                 switch (event.type)
                 {
-                    case SDL_QUIT:
-                        run = false;
-                        cpu.stop();
-                        break;
+                case SDL_QUIT:
+                    run = false;
+                    cpu.stop();
+                    break;
                 }
             }
 
@@ -95,49 +107,29 @@ int main(int argc, char** argv)
         }
     }
 
-    if (window != nullptr)
-        SDL_DestroyWindow(window);
-
-    if (renderer != nullptr)
-        SDL_DestroyRenderer(renderer);
+    if (window != nullptr) SDL_DestroyWindow(window);
+    if (renderer != nullptr) SDL_DestroyRenderer(renderer);
 
     SDL_Quit();
 
     return 0;
 }
 
-gb::rom load_rom(fs::path path)
+std::error_code load_cart(const fs::path& path, gb::cartridge& cart)
 {
     std::error_code err;
-    auto sts = fs::status(path, err);
-    if (err)
-    {
-        std::cerr << path.filename() << " is inaccessible: " << err.message() << std::endl;
-        std::exit(1);
-    }
+    fs::file_status sts = fs::status(path, err);
+    if (err) return err;
 
-    if (sts.type() != fs::file_type::regular)
-    {
-        std::cerr << path.filename() << " is not a file" << std::endl;
-        std::exit(1);
-    }
+    uintmax_t size = fs::file_size(path, err);
+    if (err) return err;
 
-    err.clear();
-    auto size = fs::file_size(path, err);
-    if (err)
-    {
-        std::cerr << path.filename() << " is inaccessible: " << err.message() << std::endl;
-        std::exit(1);
-    }
+    auto* file = std::fopen(path.c_str(), "rb");
+    if (file == nullptr) return std::error_code{errno, std::iostream_category()};
 
-    gb::rom rom{size};
-    std::ifstream fin{path};
-    fin.read(reinterpret_cast<char*>(rom.data.data()), size);
-    if (static_cast<decltype(size)>(fin.gcount()) != size)
-    {
-        std::cerr << "failed to read " << path.filename() << std::endl;
-        std::exit(1);
-    }
+    cart.data.reserve(size);
+    size_t actual = std::fread(cart.data.data(), 1, size, file);
+    if (actual != size) std::error_code(errno, std::iostream_category());
 
-    return rom;
+    return {};
 }

@@ -32,22 +32,7 @@ using promote_t = typename promote<T>::type;
 
 }
 
-constexpr uint8_t operator "" _u8 (unsigned long long v)
-{
-    return static_cast<uint8_t>(v);
-}
-
-constexpr uint16_t operator "" _u16 (unsigned long long v)
-{
-    return static_cast<uint16_t>(v);
-}
-
-constexpr uint32_t operator "" _u32 (unsigned long long v)
-{
-    return static_cast<uint32_t>(v);
-}
-
-constexpr uint64_t operator "" _u64 (unsigned long long v)
-{
-    return static_cast<uint64_t>(v);
-}
+constexpr uint8_t  operator"" _u8(unsigned long long v) { return static_cast<uint8_t>(v); }
+constexpr uint16_t operator"" _u16(unsigned long long v) { return static_cast<uint16_t>(v); }
+constexpr uint32_t operator"" _u32(unsigned long long v) { return static_cast<uint32_t>(v); }
+constexpr uint64_t operator"" _u64(unsigned long long v) { return static_cast<uint64_t>(v); }

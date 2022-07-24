@@ -3,8 +3,11 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
+#include <system_error>
 
-#include "rom.hpp"
+#include "cartridge.hpp"
+#include "memory_bank_controller.hpp"
 
 namespace gb
 {
@@ -13,25 +16,98 @@ struct memory
 {
 public:
     // memory mapped registers
-    static constexpr uint16_t divider        = 0xff04; // aka DIV
-    static constexpr uint16_t timer_counter  = 0xff05; // aka TIMA
-    static constexpr uint16_t timer_modulo   = 0xff06; // aka TMA
-    static constexpr uint16_t timer_control  = 0xff07; // aka TAC
-    static constexpr uint16_t interrupt_flag = 0xff0f;
-    static constexpr uint16_t lcd_control    = 0xff40;
+    static constexpr uint16_t joypad_input      = 0xFF00;
+    static constexpr uint16_t serial_transfer_0 = 0xFF01;
+    static constexpr uint16_t serial_transfer_1 = 0xFF02;
 
-    memory();
+    static constexpr uint16_t divider       = 0xFF04; // aka DIV
+    static constexpr uint16_t timer_counter = 0xFF05; // aka TIMA
+    static constexpr uint16_t timer_modulo  = 0xFF06; // aka TMA
+    static constexpr uint16_t timer_control = 0xFF07; // aka TAC
 
-    void load_rom(rom r) noexcept;
+    static constexpr uint16_t interrupt_flag = 0xFF0F;
 
-    uint8_t read(uint16_t addr) noexcept;
+    static constexpr uint16_t sound_start = 0xFF10;
+    static constexpr uint16_t sound_end   = 0xFF26;
+
+    static constexpr uint16_t wave_pattern_start = 0xFF30;
+    static constexpr uint16_t wave_pattern_end   = 0xFF3F;
+
+    static constexpr uint16_t lcd_control              = 0xFF40;
+    static constexpr uint16_t _1                       = 0xFF41;
+    static constexpr uint16_t _2                       = 0xFF42;
+    static constexpr uint16_t _3                       = 0xFF43;
+    static constexpr uint16_t _4                       = 0xFF44;
+    static constexpr uint16_t _5                       = 0xFF45;
+    static constexpr uint16_t oma_dma_control_register = 0xFF46;
+    static constexpr uint16_t _7                       = 0xFF47;
+    static constexpr uint16_t _8                       = 0xFF48;
+    static constexpr uint16_t _9                       = 0xFF49;
+    static constexpr uint16_t _a                       = 0xFF4A;
+    static constexpr uint16_t _b                       = 0xFF4B;
+
+    static constexpr uint16_t vram_bank_select = 0xFF4F;
+    static constexpr uint16_t disable_boot_rom = 0xFF50;
+
+    static constexpr uint16_t vram_dma_start = 0xFF51;
+    static constexpr uint16_t vram_dma_end   = 0xFF55;
+
+    static constexpr uint16_t bg_palette  = 0xFF68;
+    static constexpr uint16_t obj_palette = 0xFF69;
+
+    static constexpr uint16_t wram_bank_select = 0xFF70;
+
+    memory(std::unique_ptr<memory_bank_controller> controller, cartridge& cart);
+
+    uint8_t  read(uint16_t addr) noexcept;
     uint16_t read16(uint16_t addr) noexcept;
-    void write(uint16_t addr, uint8_t val) noexcept;
-    void write(uint16_t addr, uint16_t val) noexcept;
+    void     write(uint16_t addr, uint8_t val) noexcept;
+    void     write16(uint16_t addr, uint16_t val) noexcept;
 
 private:
-    std::array<uint8_t, 0x10000> space;
+    // 0000 - 3FFF: 16 KiB ROM bank 00: from cartridge, usually a fixed bank
+    // 4000 - 7FFF: 16 KiB ROM bank 01-NN: from cartridge, switch bank via mapper (if any)
+    // 8000 - 9FFF: 8 KiB Video RAM (VRAM): in CGB mode, switchable bank 0/1
+    // A000 - BFFF: 8 KiB External RAM: From cartridge, switchable bank 1-7
+    // C000 - CFFF: 4 KiB Work RAM (WRAM)
+    // D000 - DFFF: 4 KiB Work RAM (WRAM): In CGB mode, switchable bank 1-7
+    // E000 - FDFF: Mirror of 0xC000-0xDFFF: Nintendo says use is prohibited
+    // FE00 - FE9F: Sprite Attribute Table aka OAM (Object Attribute Memory)
+    // FEA0 - FEFF: Not Usable: Nintendo says use is prohibited
+    // FF00 - FF7F: I/O Registers
+    // FF80 - FFFE: Stack
+    // FFFF: Interrupt Enable Register (IE)
 
+    // Jump Vectors in first ROM bank (can be used for other uses though):
+    // RST: 0000, 0008, 0010, 0018, 0020, 0028, 0030, 0038
+    // Interrupts: 0040, 0048, 0050, 0058, 0060
+
+    static constexpr uint16_t boot_rom_end     = 0x0100;
+    static constexpr uint16_t rom_bank_0_end   = 0x4000;
+    static constexpr uint16_t rom_bank_n_end   = 0x8000;
+    static constexpr uint16_t vram_end         = 0xA000;
+    static constexpr uint16_t ext_ram_end      = 0xC000;
+    static constexpr uint16_t wram_0_end       = 0xD000;
+    static constexpr uint16_t wram_n_end       = 0xE000;
+    static constexpr uint16_t mirror_0_end     = 0xF000;
+    static constexpr uint16_t mirror_n_end     = 0xFE00;
+    static constexpr uint16_t oam_end          = 0xFEA0;
+    static constexpr uint16_t oam_invalid_end  = 0xFF00;
+    static constexpr uint16_t io_registers_end = 0xFF80;
+    static constexpr uint16_t stack_end        = 0xFFFF;
+
+    std::unique_ptr<memory_bank_controller> controller;
+    cartridge&                              cart;
+    std::array<uint8_t, 0x2000>             vram; // TODO: switchable in color
+    std::array<uint8_t, 0x1000>             wram_bank_0;
+    std::array<uint8_t, 0x1000>             wram_bank_n; // TODO: switchable in color
+    // TODO Sprite Attribute Table                       //
+    // TODO "Invalid" Sprite Attribute Table
+    std::array<uint8_t, 0x80> io_registers;
+    std::array<uint8_t, 0x7F> stack;
+    uint8_t                   interrupt_enable_register;
+
+    // clang-format off
     static constexpr std::array<uint8_t, 0x100> bootstrap_rom = {
         0x31, 0xfe, 0xff, 0xaf, 0x21, 0xff, 0x9f, 0x32,
         0xcb, 0x7c, 0x20, 0xfb, 0x21, 0x26, 0xff, 0x0e,
@@ -66,6 +142,7 @@ private:
         0xf5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20,
         0xfb, 0x86, 0x20, 0xfe, 0x3e, 0x01, 0xe0, 0x50,
     };
+    // clang-format on
 };
 
 }
