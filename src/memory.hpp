@@ -16,9 +16,9 @@ struct memory
 {
 public:
     // memory mapped registers
-    static constexpr uint16_t joypad_input      = 0xFF00;
-    static constexpr uint16_t serial_transfer_0 = 0xFF01;
-    static constexpr uint16_t serial_transfer_1 = 0xFF02;
+    static constexpr uint16_t joypad_input         = 0xFF00;
+    static constexpr uint16_t serial_transfer_data = 0xFF01;
+    static constexpr uint16_t serial_transfer_ctrl = 0xFF02;
 
     static constexpr uint16_t divider       = 0xFF04; // aka DIV
     static constexpr uint16_t timer_counter = 0xFF05; // aka TIMA
@@ -33,29 +33,39 @@ public:
     static constexpr uint16_t wave_pattern_start = 0xFF30;
     static constexpr uint16_t wave_pattern_end   = 0xFF3F;
 
-    static constexpr uint16_t lcd_control              = 0xFF40;
-    static constexpr uint16_t _1                       = 0xFF41;
-    static constexpr uint16_t _2                       = 0xFF42;
-    static constexpr uint16_t _3                       = 0xFF43;
-    static constexpr uint16_t _4                       = 0xFF44;
-    static constexpr uint16_t _5                       = 0xFF45;
-    static constexpr uint16_t oma_dma_control_register = 0xFF46;
-    static constexpr uint16_t _7                       = 0xFF47;
-    static constexpr uint16_t _8                       = 0xFF48;
-    static constexpr uint16_t _9                       = 0xFF49;
-    static constexpr uint16_t _a                       = 0xFF4A;
-    static constexpr uint16_t _b                       = 0xFF4B;
+    static constexpr uint16_t lcd_control      = 0xFF40; // aka LCDC
+    static constexpr uint16_t stat             = 0xFF41; // aka STAT
+    static constexpr uint16_t screen_y         = 0xFF42; // aka SY
+    static constexpr uint16_t screen_x         = 0xFF43; // aka SX
+    static constexpr uint16_t ly               = 0xFF44; // aka LY
+    static constexpr uint16_t lyc              = 0xFF45; // aka LYC
+    static constexpr uint16_t dma              = 0xFF46; // aka DMA
+    static constexpr uint16_t bgp              = 0xFF47; // aka BGP
+    static constexpr uint16_t object_pallete_0 = 0xFF48; // aka OBP0
+    static constexpr uint16_t object_pallete_1 = 0xFF49; // aka OBP1
+    static constexpr uint16_t window_y         = 0xFF4A; // aka WY
+    static constexpr uint16_t window_x         = 0xFF4B; // aka WX
 
-    static constexpr uint16_t vram_bank_select = 0xFF4F;
+    static constexpr uint16_t key1 = 0xFF4D;
+
+    static constexpr uint16_t vram_bank_key = 0xFF4F; // aka VBK
+
     static constexpr uint16_t disable_boot_rom = 0xFF50;
 
-    static constexpr uint16_t vram_dma_start = 0xFF51;
-    static constexpr uint16_t vram_dma_end   = 0xFF55;
+    static constexpr uint16_t vram_dma_start = 0xFF51; // aka HDMA1
+    static constexpr uint16_t vram_dma_end   = 0xFF55; // aka HDMA5
 
-    static constexpr uint16_t bg_palette  = 0xFF68;
-    static constexpr uint16_t obj_palette = 0xFF69;
+    static constexpr uint16_t infrared_port = 0xFF56; // aka RP
 
-    static constexpr uint16_t wram_bank_select = 0xFF70;
+    static constexpr uint16_t bg_palette_index = 0xFF68; // aka BCPS
+    static constexpr uint16_t bg_palette_data  = 0xFF69; // aka BCPD
+
+    static constexpr uint16_t obj_palette_index = 0xFF6A; // aka OCPS
+    static constexpr uint16_t obj_palette_data  = 0xFF6B; // aka OCPD
+
+    static constexpr uint16_t wram_bank_select = 0xFF70; // aka SVBK
+
+    static constexpr uint16_t interrupt_enable = 0xFFFF; // aka IE
 
     memory(std::unique_ptr<memory_bank_controller> controller, cartridge& cart);
 

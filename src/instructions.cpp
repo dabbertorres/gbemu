@@ -596,20 +596,12 @@ void log_instruction(uint8_t op)
 {
     const instruction& instr = instructions[op];
 
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                 "unimplemented instruction: 0x%x '%s' (%d)",
-                 op,
-                 instr.disassembly,
-                 instr.length);
+    SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "0x%x '%s' (%d)", op, instr.disassembly, instr.length);
 }
 
 void log_ext_instruction(uint8_t op)
 {
     const instruction& instr = instructions[op];
 
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                 "unimplemented instruction: 0xCB%x '%s' (%d)",
-                 op,
-                 instr.disassembly,
-                 instr.length);
+    SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "0xCB%x '%s' (%d)", op, instr.disassembly, instr.length);
 }

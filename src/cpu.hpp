@@ -219,6 +219,7 @@ private:
     std::atomic_bool running;
     bool             interrupts_enabled;
     uint32_t         cycles;
+    bool             debug_mode;
 
     registers r;
 };

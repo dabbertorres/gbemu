@@ -25,6 +25,73 @@ cpu::cpu(std::unique_ptr<memory>&& mem, model model) noexcept
     , r{}
 {
     initialize_registers(model, r, false /* TODO */);
+    r.sp = 0xFFFE;
+    r.pc = 0x100;
+
+    mem->write(gb::memory::joypad_input, 0xCF);
+    mem->write(gb::memory::serial_transfer_data, 0x00);
+    mem->write(gb::memory::serial_transfer_ctrl, 0x7E);
+    mem->write(gb::memory::divider, 0xAB);
+    mem->write(gb::memory::timer_counter, 0x00);
+    mem->write(gb::memory::timer_modulo, 0x00);
+    mem->write(gb::memory::timer_control, 0xF8);
+    mem->write(gb::memory::interrupt_flag, 0xE1);
+
+    mem->write(0xFF10, 0x80);
+    mem->write(0xFF11, 0xBF);
+    mem->write(0xFF12, 0xF3);
+    mem->write(0xFF13, 0xFF);
+    mem->write(0xFF14, 0xBF);
+    mem->write(0xFF16, 0x3F);
+    mem->write(0xFF17, 0x00);
+    mem->write(0xFF18, 0xFF);
+    mem->write(0xFF19, 0xBF);
+    mem->write(0xFF1A, 0x7F);
+    mem->write(0xFF1B, 0xFF);
+    mem->write(0xFF1C, 0x9F);
+    mem->write(0xFF1D, 0xFF);
+    mem->write(0xFF1E, 0xBF);
+    mem->write(0xFF20, 0xFF);
+    mem->write(0xFF21, 0x00);
+    mem->write(0xFF22, 0x00);
+    mem->write(0xFF23, 0xBF);
+    mem->write(0xFF24, 0x77);
+    mem->write(0xFF25, 0xF3);
+    mem->write(0xFF26, 0xF1);
+
+    mem->write(gb::memory::lcd_control, 0x91);
+    mem->write(gb::memory::stat, 0x85);
+    mem->write(gb::memory::screen_y, 0x00);
+    mem->write(gb::memory::screen_x, 0x00);
+    mem->write(gb::memory::ly, 0x00);
+    mem->write(gb::memory::lyc, 0x00);
+    mem->write(gb::memory::dma, 0xFF);
+    mem->write(gb::memory::bgp, 0xFC);
+    mem->write(gb::memory::object_pallete_0, 0x00);
+    mem->write(gb::memory::object_pallete_1, 0x00);
+    mem->write(gb::memory::window_y, 0x00);
+    mem->write(gb::memory::window_x, 0x00);
+
+    mem->write(gb::memory::key1, 0xFF);
+    mem->write(gb::memory::vram_bank_key, 0xFF);
+
+    mem->write(gb::memory::vram_dma_start + 0, 0xFF);
+    mem->write(gb::memory::vram_dma_start + 1, 0xFF);
+    mem->write(gb::memory::vram_dma_start + 2, 0xFF);
+    mem->write(gb::memory::vram_dma_start + 3, 0xFF);
+    mem->write(gb::memory::vram_dma_start + 4, 0xFF);
+
+    mem->write(gb::memory::infrared_port, 0xFF);
+
+    mem->write(gb::memory::bg_palette_index, 0xFF);
+    mem->write(gb::memory::bg_palette_data, 0xFF);
+
+    mem->write(gb::memory::obj_palette_index, 0xFF);
+    mem->write(gb::memory::obj_palette_data, 0xFF);
+
+    mem->write(gb::memory::wram_bank_select, 0xFF);
+
+    mem->write(gb::memory::interrupt_enable, 0x00);
 }
 
 void cpu::run() noexcept
@@ -166,9 +233,7 @@ void cpu::update_timers() noexcept
 
 uint32_t cpu::execute(uint8_t op) noexcept
 {
-    constexpr bool log_instructions = false;
-
-    if (log_instructions && op != 0xCB) log_instruction(op);
+    if (op != 0xCB) log_instruction(op);
 
     switch (op)
     {
@@ -387,7 +452,7 @@ uint32_t cpu::execute(uint8_t op) noexcept
     {
         auto ext_op = fetch();
 
-        if (log_instructions) log_ext_instruction(ext_op);
+        log_ext_instruction(ext_op);
 
         switch (ext_op)
         {

@@ -5,6 +5,8 @@
 class memory_bank_controller
 {
 public:
+    memory_bank_controller() = default;
+
     memory_bank_controller(const memory_bank_controller&)            = default;
     memory_bank_controller& operator=(const memory_bank_controller&) = default;
 
