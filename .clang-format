@@ -91,13 +91,13 @@ IncludeCategories:
   Priority: 1
 - Regex: ^<experimental/([[:alnum:]]|_)+>$
   Priority: 2
-- Regex: ^<([[:alnum:]]|_)+\.h>$
+- Regex: ^<([[:alnum:]]|_)+\.h(pp)?>$
   Priority: 11
-- Regex: ^<([[:alnum:]]|_)+/([[:alnum:]]|_)+\.h(pp)?>$
+- Regex: ^<([[:alnum:]]|_)+/([[:alnum:]]|_)+(\.h(pp)?)?>$
   Priority: 12
-- Regex: ^"([[:alnum:]]|_)+/([[:alnum:]]|_)+"$
+- Regex: ^"([[:alnum:]]|_)+/([[:alnum:]]|_)+(\.h(pp)?)?"$
   Priority: 98
-- Regex: ^"([[:alnum:]]|_)+"$
+- Regex: ^"([[:alnum:]]|_)+(\.h(pp)?)?"$
   Priority: 99
 
 IncludeIsMainRegex: '(_test)?$'
