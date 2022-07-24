@@ -1,16 +1,222 @@
----
-  BasedOnStyle: Google
-  AccessModifierOffset: '-2'
-  AlignTrailingComments: 'true'
-  AllowAllParametersOfDeclarationOnNextLine: 'false'
-  AlwaysBreakTemplateDeclarations: 'No'
-  BreakBeforeBraces: Attach
-  ColumnLimit: '100'
-  ConstructorInitializerAllOnOneLineOrOnePerLine: 'true'
-  IncludeBlocks: Regroup
-  IndentPPDirectives: AfterHash
-  IndentWidth: '2'
-  NamespaceIndentation: All
-  BreakBeforeBinaryOperators: All
-  BreakBeforeTernaryOperators: 'true'
-...
+# vim: ft=yaml
+Language: Cpp
+Standard: Latest
+
+AccessModifierOffset: -4
+
+AlignAfterOpenBracket: Align
+AlignArrayOfStructures: Left
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveBitFields: Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveMacros: Consecutive
+AlignEscapedNewlines: Left
+AlignOperands: AlignAfterOperator
+AlignTrailingComments: true
+
+AllowAllArgumentsOnNextLine: false
+# AllowAllConstructorInitializersOnNextLine: false # deprecated
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLambdasOnASingleLine: All
+AllowShortLoopsOnASingleLine: true
+
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: Yes
+
+AttributeMacros: []
+
+BinPackArguments: false
+BinPackParameters: false
+BitFieldColonSpacing: Both
+
+BraceWrapping:
+  AfterCaseLabel:        true
+  AfterClass:            true
+  AfterControlStatement: Always
+  AfterEnum:             true
+  AfterExternBlock:      true
+  AfterFunction:         true
+  AfterNamespace:        true
+  AfterStruct:           true
+  AfterUnion:            true
+  BeforeCatch:           true
+  BeforeElse:            true
+  BeforeLambdaBody:      true
+  BeforeWhile:           true
+  IndentBraces:          false
+  SplitEmptyFunction:    false
+  SplitEmptyNamespace:   false
+  SplitEmptyRecord:      false
+
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Custom
+# BreakBeforeConceptDeclarations: Always # v14 expects a boolean?
+BreakBeforeConceptDeclarations: true
+# BreakBeforeInheritanceComma: false
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+BreakStringLiterals: false
+
+ColumnLimit: 120
+CommentPragmas:  '^ IWYU pragma:'
+CompactNamespaces: false
+
+# ConstructorInitializerAllOnOneLineOrOnePerLine: true # deprecated
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true
+DeriveLineEnding: false
+DerivePointerAlignment: false
+DisableFormat: false
+EmptyLineAfterAccessModifier: Never
+EmptyLineBeforeAccessModifier: LogicalBlock
+FixNamespaceComments: false
+
+ForEachMacros: []
+
+IfMacros: []
+
+IncludeBlocks: Regroup
+
+IncludeCategories:
+- Regex: ^<([[:alnum:]]|_)+>$
+  Priority: 1
+- Regex: ^<experimental/([[:alnum:]]|_)+>$
+  Priority: 2
+- Regex: ^<([[:alnum:]]|_)+\.h>$
+  Priority: 11
+- Regex: ^<([[:alnum:]]|_)+/([[:alnum:]]|_)+\.h(pp)?>$
+  Priority: 12
+- Regex: ^"([[:alnum:]]|_)+/([[:alnum:]]|_)+"$
+  Priority: 98
+- Regex: ^"([[:alnum:]]|_)+"$
+  Priority: 99
+
+IncludeIsMainRegex: '(_test)?$'
+IncludeIsMainSourceRegex: ''
+
+IndentAccessModifiers: false
+IndentCaseBlocks: false
+IndentCaseLabels: false
+IndentExternBlock: NoIndent
+IndentGotoLabels: false
+IndentPPDirectives: AfterHash
+IndentRequires: true # changed to IndentRequiresClause in v15
+IndentWidth: 4
+IndentWrappedFunctionNames: false
+
+# InsertBraces: false # available in v15
+InsertTrailingCommas: Wrapped
+KeepEmptyLinesAtTheStartOfBlocks: false
+LambdaBodyIndentation: Signature
+
+MacroBlockBegin: '^.+_(BEGIN|HEAD|START)$'
+MacroBlockEnd:   '^.+_(END|STOP)$'
+
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: Inner
+
+NamespaceMacros: []
+
+PPIndentWidth: -1
+PackConstructorInitializers: Never
+
+PointerAlignment: Left
+
+QualifierAlignment: Custom
+QualifierOrder:
+- static
+- inline
+- const
+- constexpr
+- volatile
+- restrict
+- type
+
+# RawStringFormats:
+# - Language: Cpp
+#   Delimiters:
+#   - 'cc'
+#   - 'cpp'
+#   BasedOnStyle: llvm
+#   CanonicalDelimiters: 'cc'
+
+ReferenceAlignment: Pointer
+ReflowComments: true
+RemoveBracesLLVM: false
+# RequiresClausePosition: WithPreceding # available in v15
+SeparateDefinitionBlocks: Leave
+ShortNamespaceLines: 1
+
+SortIncludes: CaseSensitive
+SortUsingDeclarations: true
+
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: false
+SpaceAroundPointerQualifiers: Default
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+# SpaceBeforeParensOptions:
+#   AfterControlStatements: true
+#   AfterForeachMacros: true
+#   AfterFunctionDeclarationName: false
+#   AfterFuncDefinitionName: false
+#   AfterIfMacros: true
+#   AfterOverloadedOperator: false
+#   AfterRequiresInClause: true
+#   AfterRequiresInExpression: true
+#   BeforeNonEmptyParentheses: false
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: false
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 1
+SpacesInAngles: Never
+SpacesInCStyleCastParentheses: false
+SpacesInConditionalStatement: false
+SpacesInContainerLiterals: false
+SpacesInLineCommentPrefix:
+  Minimum: 1
+  Maximum: -1
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+StatementAttributeLikeMacros: []
+
+StatementMacros:
+- TEST_CASE
+- SECTION
+
+TabWidth: 4
+
+TypenameMacros: []
+
+UseCRLF: false
+UseTab: Never
+
+WhitespaceSensitiveMacros: []
+
+# Penalty settings
+# PenaltyBreakAssignment: 0
+# PenaltyBreakBeforeFirstCallParameter: 0
+# PenaltyBreakComment: 0
+# PenaltyBreakFirstLessLess: 0
+# PenaltyBreakOpenParenthesis: 0
+# PenaltyBreakString: 0
+# PenaltyBreakTemplateDeclaration: 0
+# PenaltyExcessCharacter: 0
+# PenaltyIndentedWhitespace: 0
+# PenaltyReturnTypeOnItsOwnLine: 0

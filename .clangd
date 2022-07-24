@@ -1,0 +1,9 @@
+# vim: ft=yaml
+Diagnostics:
+  UnusedIncludes: Strict
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+Hover:
+  ShowAKA: Yes
